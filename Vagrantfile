@@ -1,4 +1,4 @@
-# -*- mode: ruby -*-
+#-*- mode: ruby -*-
 # vi: set ft=ruby :
 
 # All Vagrant configuration is done below. The "2" in Vagrant.configure
@@ -23,7 +23,7 @@ Vagrant.configure("2") do |config|
   # within the machine from a port on the host machine. In the example below,
   # accessing "localhost:8080" will access port 80 on the guest machine.
   # NOTE: This will enable public access to the opened port
-  # config.vm.network "forwarded_port", guest: 80, host: 8080
+  config.vm.network "forwarded_port", guest: 80, host: 8080
 
   # Create a forwarded port mapping which allows access to a specific port
   # within the machine from a port on the host machine and only allow access
@@ -43,19 +43,19 @@ Vagrant.configure("2") do |config|
   # the path on the host to the actual folder. The second argument is
   # the path on the guest to mount the folder. And the optional third
   # argument is a set of non-required options.
-  config.vm.synced_folder "..", "/var/www/sites", :nfs => true
+  config.vm.synced_folder "../mcbcf", "/var/www/mcbcf", :nfs => true
 
   # Provider-specific configuration so you can fine-tune various
   # backing providers for Vagrant. These expose provider-specific options.
   # Example for VirtualBox:
   #
-  # config.vm.provider "virtualbox" do |vb|
+  config.vm.provider "virtualbox" do |vb|
   #   # Display the VirtualBox GUI when booting the machine
   #   vb.gui = true
   #
   #   # Customize the amount of memory on the VM:
-  #   vb.memory = "1024"
-  # end
+    vb.memory = "10213"
+  end
   #
   # View the documentation for the provider you are using for more
   # information on available options.
@@ -63,13 +63,32 @@ Vagrant.configure("2") do |config|
   # Enable provisioning with a shell script. Additional provisioners such as
   # Puppet, Chef, Ansible, Salt, and Docker are also available. Please see the
   # documentation for more information about their specific syntax and use.
+  config.vm.provision "file", source: "files/selinux", destination: "/tmp/selinux"
+  config.vm.provision "file", source: "files/httpd.conf", destination: "/tmp/httpd.conf"
+
   config.vm.provision "shell", inline: <<-SHELL
-     yum install php
-     yum install php-xml
-     yum install php-intl
-     yum install php-fpm
-     yum install php-mbstring
-     yum install php-mysql
-     yum install mariadb-server
+     sudo yum update
+     sudo yum -y install php
+     sudo yum -y install php-xml
+     sudo yum -y install php-intl
+     sudo yum -y install php-fpm
+     sudo yum -y install php-mbstring
+     sudo yum -y install php-mysql
+     sudo yum -y install php-posix
+     sudo yum -y install mariadb-server
+     sudo yum -y install mariadb
+     sudo yum -y install vim
+     sudo curl -sS https://getcomposer.org/installer | php
+     sudo mv composer.phar /usr/local/bin/composer 
+     sudo chmod +x /usr/local/bin/composer
+     sudo cp /tmp/selinux /etc/sysconfig/selinux
+     sudo cp /tmp/httpd.conf /etc/httpd/conf
+     sudo systemctl enable httpd
+     sudo systemctl enable mariadb
+     sudo systemctl restart mariadb
+     sudo systemctl restart httpd
    SHELL
+
+  #config.vm.provision "file", source: "files/selinux", destination: "/etc/sysconfig/selinux "
+  #config.vm.provision "file", source: "files/httpd.conf", destination: "/etc/httpd/conf"
 end
